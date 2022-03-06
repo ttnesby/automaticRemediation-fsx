@@ -1,0 +1,15 @@
+#Paket dependency manager
+.paket/
+paket-files/
+
+# Visual Code
+.DS_Store
+.fake
+.ionide
+
+# JetBrain Rider
+.idea
+Folder.DotSettings.user
+
+# Playing
+scratch*
