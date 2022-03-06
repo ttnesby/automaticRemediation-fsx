@@ -13,11 +13,11 @@ type JobSpec = {
 }
 with
     override js.ToString() =
-        $"\nName: {js.name}\nAsJob: {js.asJob}\nScope: {js.scopeName}" +
+        $"Name: {js.name}\nScope: {js.scopeName}" +
         $"\npolicyAssignmentId: {js.policyAssignmentId.Split('/') |> Array.last}" +
         $"\nRefId: {js.policyDefinitionReferenceId}"
 
-type PolicyStatesToJobSpecs = Policy.State list -> JobSpec list
+type PolicyStatesToJobSpecs = Policy.NonCompliance list -> JobSpec list
 
 type Report = string -> JobSpec list -> unit
 
@@ -33,7 +33,7 @@ module JobSpec =
             policyDefinitionReferenceId = refId
         }
 
-    let private policyStateToJobs (ps: Policy.State) =
+    let private policyStateToJobs (ps: Policy.NonCompliance) =
         match ps.assignmentType with
         | Policy.AssignmentType.Policy ->
             (ps.scopeName, ps.scopeId, ps.assignmentId, None) |> create |> List.singleton

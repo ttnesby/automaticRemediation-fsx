@@ -13,7 +13,7 @@ with
             | AssignmentType.Policy -> "policy"
             | AssignmentType.PolicySet s -> $"policySet [{s |> Seq.length}] {s |> Seq.toList}"
 
-type State = {
+type NonCompliance = {
     scopeName: string
     scopeId: string
     assignmentId: string
@@ -24,13 +24,13 @@ with
         $"{s.scopeName} ({s.scopeId.Split('/') |> Array.last})\n{s.assignmentId.Split('/') |> Array.last}" +
         $"\n{s.assignmentType}"
 
-type Get = OAuth.Token -> Scope.Entity list -> State list
-type Report = string -> State list -> unit
+type Get = OAuth.Token -> Scope.Entity list -> NonCompliance list
+type Report = string -> NonCompliance list -> unit
 
-module State =
+module NonCompliance =
 
     let create (name, sId, aId, aType) =
-        {State.scopeName = name; scopeId = sId; assignmentId = aId; assignmentType = aType }
+        {NonCompliance.scopeName = name; scopeId = sId; assignmentId = aId; assignmentType = aType }
 
     module RestAPI =
 
@@ -74,8 +74,11 @@ module State =
                 | [] ->
                     aUrl.SetQueryParams( {|``api-version`` = "2019-10-01";``$filter`` = filter;``$select`` = select|} )
                 | _ -> aUrl |> Url
-                |> fun (s: Url) ->
-                    s.WithOAuthBearerToken(t.access_token).WithTimeout(5).PostStringAsync("").ReceiveJson<OData>()
+                |> fun (u: Url) ->
+                    u
+                        .WithOAuthBearerToken(t.access_token)
+                        .WithTimeout(5).PostStringAsync("")
+                        .ReceiveJson<OData>()
                 |> Async.AwaitTask
                 |> Async.RunSynchronously
                 |> fun od ->

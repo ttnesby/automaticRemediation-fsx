@@ -13,7 +13,7 @@ type Token = {
 type ResourceValue = string
 type ReqTimeout_sec = int
 
-type Get = ResourceValue*ReqTimeout_sec -> Parameters.Context -> Async<Result<Token, string>>
+type Get = ResourceValue*ReqTimeout_sec -> Configuration.Context -> Async<Result<Token, string>>
 
 [<RequireQualifiedAccess>]
 module Token =
@@ -40,6 +40,5 @@ module Token =
                 |> Async.AwaitTask
                 |> Async.RunSynchronously
                 |> Ok
-            with
-            | e -> e.Message |> eMsg |> Error
+            with | e -> e.Message |> eMsg |> Error
         async { return tryGet }

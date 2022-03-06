@@ -3,7 +3,7 @@ automaticRemediation:
     tenantId:     0389929e-887a-4d0a-8d0a-53da10b072cd
     clientId:     7b60133e-2ebb-4ef0-ae89-0a876b2cf769
     clientSecret: a-secret
-  parameters:
+  application:
     startMngGrp:  e66a3cea-955c-45e8-b388-e962aa80c514  # guid of the start management group
 #    scopeType:    managementGroup                       # managementGroup | subscription
 #    scopeFilter: .*                                     # reg.ex filter on displayName
@@ -11,5 +11,5 @@ automaticRemediation:
 #      - nav-policy-1
 #      - nav-policy-2
 #    assignmentFiltertype: include                       # include | exclude
-#  general:
+#  technical:
 #    httpTimeout: 5                                      # http call timmeout in seconds
