@@ -5,11 +5,11 @@ automaticRemediation:
     clientSecret: a-secret
   application:
     startMngGrp:  e66a3cea-955c-45e8-b388-e962aa80c514  # guid of the start management group
-#    scopeType:    managementGroup                       # managementGroup | subscription
-#    scopeFilter: .*                                     # reg.ex filter on displayName
+#    scopeFilter: managementGroup                       # managementGroup | subscription
+#    scopeDisplayNameFilter: .*                         # reg.ex filter on displayName
 #    assignmentFilter:
 #      - nav-policy-1
 #      - nav-policy-2
 #    assignmentFiltertype: include                       # include | exclude
 #  technical:
-#    httpTimeout: 5                                      # http call timmeout in seconds
+#    httpTimeout: 5                                      # http call timeout in seconds

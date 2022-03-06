@@ -15,7 +15,7 @@ with
     override js.ToString() =
         $"Name: {js.name}\nScope: {js.scopeName}" +
         $"\npolicyAssignmentId: {js.policyAssignmentId.Split('/') |> Array.last}" +
-        $"\nRefId: {js.policyDefinitionReferenceId}"
+        $"\nRefId: {js.policyDefinitionReferenceId}\n"
 
 type PolicyStatesToJobSpecs = Policy.NonCompliance list -> JobSpec list
 

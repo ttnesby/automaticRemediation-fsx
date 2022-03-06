@@ -1,4 +1,5 @@
 #load @"./../.paket/load/Flurl.Http.fsx"
+#load @"./configuration.fsx"
 #load @"./oAuthToken.fsx"
 #load @"./scope.fsx"
 
@@ -22,9 +23,9 @@ type NonCompliance = {
 with
     override s.ToString () =
         $"{s.scopeName} ({s.scopeId.Split('/') |> Array.last})\n{s.assignmentId.Split('/') |> Array.last}" +
-        $"\n{s.assignmentType}"
+        $"\n{s.assignmentType}\n"
 
-type Get = OAuth.Token -> Scope.Entity list -> NonCompliance list
+type Get = OAuth.Token*Configuration.Technical -> Scope.Entity list -> NonCompliance list
 type Report = string -> NonCompliance list -> unit
 
 module NonCompliance =
@@ -54,7 +55,7 @@ module NonCompliance =
 
         let filter mngGrpId =
             "(PolicyDefinitionAction eq 'deployifnotexists' or PolicyDefinitionAction eq 'modify') " +
-            "and ComplianceState eq 'Compliant' " +
+            "and ComplianceState eq 'NonCompliant' " +
             $"and PolicyAssignmentScope eq '{mngGrpId}'"
         let url mngGrpName =
             $"https://management.azure.com/providers/Microsoft.Management/managementGroups/{mngGrpName}" +
@@ -67,7 +68,7 @@ module NonCompliance =
         | Init of qp: InitQP
         | Rec of qp: RecQP
 
-        let get (t: OAuth.Token) (filter: string) (url: string) =
+        let get (t: OAuth.Token, tech: Configuration.Technical) (filter: string) (url: string) =
             let eMsg e = $"Failure during policy state request - [{e}]"
             let rec loop (aUrl: string, values: RState list) =
                 match values with
@@ -77,7 +78,8 @@ module NonCompliance =
                 |> fun (u: Url) ->
                     u
                         .WithOAuthBearerToken(t.access_token)
-                        .WithTimeout(5).PostStringAsync("")
+                        .WithTimeout(tech.httpTimeout)
+                        .PostStringAsync("")
                         .ReceiveJson<OData>()
                 |> Async.AwaitTask
                 |> Async.RunSynchronously
@@ -103,8 +105,8 @@ module NonCompliance =
         let toState (e: Scope.Entity) (aId: string, rss: RestAPI.RState list ) =
             let refIds = rss |> uniqueRefIds
             if (refIds |> List.isEmpty)
-            then (e.displayName, e.id, aId, AssignmentType.Policy) |> create
-            else (e.displayName, e.id, aId, refIds |> AssignmentType.PolicySet) |> create
+            then create (e.displayName, e.id, aId, AssignmentType.Policy)
+            else create (e.displayName, e.id, aId, AssignmentType.PolicySet refIds)
 
         let toStates (e: Scope.Entity) (rssg: (string*RestAPI.RState list) list) = rssg |> List.map (e |> toState)
 

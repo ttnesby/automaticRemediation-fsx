@@ -1,24 +1,20 @@
 #load @"./../.paket/load/Flurl.Http.fsx"
+#load @"./configuration.fsx"
 #load @"./oAuthToken.fsx"
 
 namespace Scope
 
-type Type =
-| ManagementGroup
-| Subscription
-| Unknown
-
 type Entity = {
     id: string
-    eType: Type
+    eType: Configuration.ScopeFiltertype
     name: System.Guid
     displayName: string
 }
 with
     override e.ToString() = $"%-30s{e.displayName}| %-20s{e.eType.ToString()}| %-25A{e.name}"
 
-type Get = OAuth.Token -> Result<Entity list, string>
-type FilterByType = Type -> Entity list -> Entity list
+type Get = OAuth.Token*Configuration.Technical*Configuration.AppSetting -> Result<Entity list, string>
+type FilterByType = Configuration.ScopeFiltertype -> Entity list -> Entity list
 type FilterByDisplayName = string -> Entity list -> Entity list
 
 type Report = string -> Entity list -> unit
@@ -57,19 +53,19 @@ module Entity =
             properties: MngGrpProps
         }
 
-        let get (token: OAuth.Token) =
+        let get (token: OAuth.Token, tech: Configuration.Technical, app: Configuration.AppSetting) =
             let eMsg e = $"Failure during mng grp request - [{e}]"
             let tryGet =
                 try
                      "https://management.azure.com/providers/Microsoft.Management/managementGroups"
-                        .AppendPathSegment("e66a3cea-955c-45e8-b388-e962aa80c514")
+                        .AppendPathSegment(app.startMngGrp.ToString())
                         .SetQueryParams( {|
                             ``api-version`` = "2020-05-01"
                             expand = "children"
                             recurse = "true"
                         |} )
                         .WithOAuthBearerToken(token.access_token)
-                        .WithTimeout(2)
+                        .WithTimeout(tech.httpTimeout)
                         .GetJsonAsync<MngGroup>()
                     |> Async.AwaitTask
                     |> Async.RunSynchronously
@@ -80,9 +76,9 @@ module Entity =
     module Mapping =
 
         let toScopeType = function
-                | "Microsoft.Management/managementGroups" -> Type.ManagementGroup
-                | "/subscriptions" -> Type.Subscription
-                | _ -> Type.Unknown
+                | "Microsoft.Management/managementGroups" -> Configuration.ScopeFiltertype.ManagementGroup
+                | "/subscriptions" -> Configuration.ScopeFiltertype.Subscription
+                | _ -> Configuration.ScopeFiltertype.Unknown
 
         let toEntity (mg: RestAPI.MngGroup) =
             let mgToTuple (mg: RestAPI.MngGroup) =
@@ -109,7 +105,7 @@ module Entity =
             mg.properties.children
             |> function | null -> [root] | ca -> loop(ca |> Array.toList, [root])
 
-    let get : Get = (RestAPI.get >> Async.RunSynchronously >> Result.map Mapping.toEntity)
+    let get : Get = fun t -> t |> (RestAPI.get >> Async.RunSynchronously >> Result.map Mapping.toEntity)
     let filterByType: FilterByType = fun t -> fun es -> es |> List.filter (fun e -> e.eType = t)
     let filterByDisplayName: FilterByDisplayName = fun pattern -> fun es ->
         es |> List.filter (fun e -> Regex.Match(e.displayName, @$"{pattern}", RegexOptions.Compiled).Success )

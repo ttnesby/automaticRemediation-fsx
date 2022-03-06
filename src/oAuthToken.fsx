@@ -1,5 +1,5 @@
 #load @"./../.paket/load/Flurl.Http.fsx"
-#load @"parameters.fsx"
+#load @"./configuration.fsx"
 
 namespace OAuth
 
@@ -11,17 +11,16 @@ type Token = {
 }
 
 type ResourceValue = string
-type ReqTimeout_sec = int
 
-type Get = ResourceValue*ReqTimeout_sec -> Configuration.Context -> Async<Result<Token, string>>
+type Get = ResourceValue*Configuration.Technical -> Configuration.Context -> Async<Result<Token, string>>
 
 [<RequireQualifiedAccess>]
 module Token =
 
     open Flurl.Http
 
-    let get: Get = fun (resource,timeout) -> fun ctx ->
-        let eMsg e = $"Failure during token request with timeout after {timeout} ms - [{e}]"
+    let get: Get = fun (resource,tech) -> fun ctx ->
+        let eMsg e = $"Failure during token request with timeout after {tech} ms - [{e}]"
         let tryGet =
             try
                 $"https://login.microsoftonline.com/%s{ctx.TenantID.ToString()}/oauth2/token"
@@ -29,7 +28,7 @@ module Token =
                         ``Cache-Control`` = "no-cache"
                         ``Content-Type`` = "application/x-www-form-urlencoded"
                     |})
-                    .WithTimeout(timeout)
+                    .WithTimeout(tech.httpTimeout)
                     .PostUrlEncodedAsync( {|
                         client_id = ctx.ClientID.ToString()
                         client_secret = ctx.ClientSecret
