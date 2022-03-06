@@ -15,7 +15,7 @@ type Entity = {
     displayName: string
 }
 with
-    override e.ToString() = $"\n{e.displayName} ({e.eType}, {e.name})"
+    override e.ToString() = $"%-30s{e.displayName}| %-20s{e.eType.ToString()}| %-25A{e.name}"
 
 type Get = OAuth.Token -> Result<Entity list, string>
 type FilterByType = Type -> Entity list -> Entity list
@@ -113,7 +113,3 @@ module Entity =
     let filterByType: FilterByType = fun t -> fun es -> es |> List.filter (fun e -> e.eType = t)
     let filterByDisplayName: FilterByDisplayName = fun pattern -> fun es ->
         es |> List.filter (fun e -> Regex.Match(e.displayName, @$"{pattern}", RegexOptions.Compiled).Success )
-    let report: Report = fun title -> fun es ->
-        printfn $"{title}"
-        es |> Seq.iter (fun e ->printfn $"{e}")
-

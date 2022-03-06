@@ -21,7 +21,7 @@ type State = {
 }
 with
     override s.ToString () =
-        $"\n{s.scopeName} ({s.scopeId.Split('/') |> Array.last})\n{s.assignmentId.Split('/') |> Array.last}" +
+        $"{s.scopeName} ({s.scopeId.Split('/') |> Array.last})\n{s.assignmentId.Split('/') |> Array.last}" +
         $"\n{s.assignmentType}"
 
 type Get = OAuth.Token -> Scope.Entity list -> State list
@@ -54,7 +54,7 @@ module State =
 
         let filter mngGrpId =
             "(PolicyDefinitionAction eq 'deployifnotexists' or PolicyDefinitionAction eq 'modify') " +
-            "and ComplianceState eq 'NonCompliant' " +
+            "and ComplianceState eq 'Compliant' " +
             $"and PolicyAssignmentScope eq '{mngGrpId}'"
         let url mngGrpName =
             $"https://management.azure.com/providers/Microsoft.Management/managementGroups/{mngGrpName}" +
@@ -115,7 +115,3 @@ module State =
         |> List.map (fun r -> r |> function | Ok s -> Some s | Error _ -> None)
         |> List.choose id
         |> List.collect id
-
-    let report : Report = fun title -> fun ss ->
-        printfn $"{title}"
-        ss |> List.iter (fun s -> printfn $"{s}")

@@ -6,29 +6,31 @@
 #load @"policyState.fsx"
 #load @"remediationJob.fsx"
 
+let doOAuth = (("https://management.azure.com/", 5) |> OAuth.Token.get) >> Async.RunSynchronously
+let report title el =
+    let header noOf = printfn $"\n---------- %s{title} [%i{noOf}] ----------\n";
+    (el, el |> List.length) |> fun (l, noOf) ->  header noOf; l |> List.iter (fun e -> printfn $"{e}")
+    el
 let reportError err = printfn $"{err}"
 let reportResult = function | Ok _ -> printfn "\nOk - exit code 0"; 0 | Error _ -> printfn "\nError - exit code (1)"; 1
-let doOAuth = (("https://management.azure.com/", 5) |> OAuth.Token.get) >> Async.RunSynchronously
-let asTitle (title, no) = $"\n---------- %s{title} [%d{no}] ----------"
-let reportAzureScopes s = s |> Scope.Entity.report (("Azure scopes", s |> Seq.length) |> asTitle); s
-let reportFilteredScopes s = s |> Scope.Entity.report (("Filtered scopes", s |> Seq.length) |> asTitle); s
-let reportNonCompliance s = s |> Policy.State.report (("Scope & Non-compliant policies", s |> Seq.length) |> asTitle); s
-let reportJobSpec s = s |> Remediation.JobSpec.report (("Remediation specifications", s |> Seq.length) |> asTitle); s
 
 fsi.CommandLineArgs
 |> Parameters.Context.fromCmdLine
-|> Result.bind doOAuth
-|> Result.bind (fun oAuthToken ->
-        oAuthToken
-        |> Scope.Entity.get
-        |> Result.map reportAzureScopes
-        |> Result.map (Scope.Type.ManagementGroup |> Scope.Entity.filterByType)
-        |> Result.map (".*" |> Scope.Entity.filterByDisplayName )
-        |> Result.map reportFilteredScopes
-        |> Result.map (Policy.State.get oAuthToken)
-        |> Result.map reportNonCompliance
-        |> Result.map Remediation.JobSpec.policyStatesToJobSpecs
-        |> Result.map reportJobSpec
+|> Result.bind (fun config ->
+    config
+    |> doOAuth
+    |> Result.bind (fun oAuthToken ->
+            oAuthToken
+            |> Scope.Entity.get
+            |> Result.map (report "Azure scopes")
+            |> Result.map (Scope.Type.ManagementGroup |> Scope.Entity.filterByType)
+            |> Result.map ("nav.*" |> Scope.Entity.filterByDisplayName )
+            |> Result.map (report "Filtered scopes")
+            |> Result.map (Policy.State.get oAuthToken)
+            |> Result.map (report "Scope & Non-compliant policies")
+            |> Result.map Remediation.JobSpec.policyStatesToJobSpecs
+            |> Result.map (report "Remediation specifications")
+        )
     )
 |> Result.mapError reportError
 |> reportResult

@@ -42,7 +42,3 @@ module JobSpec =
 
     let policyStatesToJobSpecs : PolicyStatesToJobSpecs = fun pss ->
         pss |> List.map policyStateToJobs |> List.collect id
-
-    let report: Report = fun title -> fun jss ->
-        printfn $"{title}"
-        jss |> Seq.iter (fun e ->printfn $"{e}")
