@@ -22,7 +22,7 @@ fsi.CommandLineArgs
             (oAuthToken, cfg.tech, cfg.app)
             |> Scope.Entity.get
             |> Result.map (report "Azure scopes")
-            |> Result.map (Scope.Entity.filterByType Configuration.ScopeFiltertype.ManagementGroup)
+            |> Result.map (Scope.Entity.filterByType Configuration.ScopeFilterType.ManagementGroup)
             |> Result.map (Scope.Entity.filterByDisplayName cfg.app.scopeDisplayNameFilter )
             |> Result.map (report "Filtered scopes")
             |> Result.map (Policy.NonCompliance.get (oAuthToken, cfg.tech))

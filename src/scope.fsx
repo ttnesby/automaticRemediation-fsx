@@ -6,7 +6,7 @@ namespace Scope
 
 type Entity = {
     id: string
-    eType: Configuration.ScopeFiltertype
+    eType: Configuration.ScopeFilterType
     name: System.Guid
     displayName: string
 }
@@ -14,7 +14,7 @@ with
     override e.ToString() = $"%-30s{e.displayName}| %-20s{e.eType.ToString()}| %-25A{e.name}"
 
 type Get = OAuth.Token*Configuration.Technical*Configuration.AppSetting -> Result<Entity list, string>
-type FilterByType = Configuration.ScopeFiltertype -> Entity list -> Entity list
+type FilterByType = Configuration.ScopeFilterType -> Entity list -> Entity list
 type FilterByDisplayName = string -> Entity list -> Entity list
 
 type Report = string -> Entity list -> unit
@@ -76,9 +76,9 @@ module Entity =
     module Mapping =
 
         let toScopeType = function
-                | "Microsoft.Management/managementGroups" -> Configuration.ScopeFiltertype.ManagementGroup
-                | "/subscriptions" -> Configuration.ScopeFiltertype.Subscription
-                | _ -> Configuration.ScopeFiltertype.Unknown
+                | "Microsoft.Management/managementGroups" -> Configuration.ScopeFilterType.ManagementGroup
+                | "/subscriptions" -> Configuration.ScopeFilterType.Subscription
+                | _ -> Configuration.ScopeFilterType.Unknown
 
         let toEntity (mg: RestAPI.MngGroup) =
             let mgToTuple (mg: RestAPI.MngGroup) =

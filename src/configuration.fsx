@@ -7,7 +7,7 @@ type Context = {
     SubscriptionID    : System.Guid option
 }
 
-type ScopeFiltertype =
+type ScopeFilterType =
     | ManagementGroup
     | Subscription
     | Unknown
@@ -18,10 +18,10 @@ type AssignmentFilterType =
 
 type AppSetting = {
     startMngGrp: System.Guid
-    scopeFiltertype: ScopeFiltertype
+    scopeFilterType: ScopeFilterType
     scopeDisplayNameFilter: string
     assignmentFilter: string list option
-    assignmentFiltertype: AssignmentFilterType option
+    assignmentFilterType: AssignmentFilterType option
 }
 
 type Technical = {
@@ -65,19 +65,19 @@ module All =
     module AppSetting =
         type FromHardCoded = unit -> Result<AppSetting,string>
 
-        let create (mngGrp, sFilter, sDNFilter, aFilter, aFtype) = {
+        let create (mngGrp, sFilter, sDNFilter, aFilter, aFType) = {
             AppSetting.startMngGrp = mngGrp
-            scopeFiltertype = sFilter
+            scopeFilterType = sFilter
             scopeDisplayNameFilter = sDNFilter
             assignmentFilter = aFilter
-            assignmentFiltertype = aFtype
+            assignmentFilterType = aFType
         }
 
         let fromHardCoded : FromHardCoded = fun () ->
             let eMsg e = $"Failure in config - application - [{e}]"
             try (
                 "e66a3cea-955c-45e8-b388-e962aa80c514" |>System.Guid.Parse,
-                ScopeFiltertype.ManagementGroup,
+                ScopeFilterType.ManagementGroup,
                 "nav.*",
                 None,
                 None) |> create |> Ok
