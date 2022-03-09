@@ -15,7 +15,7 @@ type AssignmentFilter = {
     ``type``: AssignmentFilterType
 }
 
-type AllConfig = {
+type YamlConfig = {
     tenantId: string
     clientId: string
     clientSecret: string
@@ -26,22 +26,26 @@ type AllConfig = {
     httpTimeout: int
 }
 
-let read (filePath: string) =
-        let eMsg e = $"failure reading {filePath} - {e}"
-        try filePath |> System.IO.File.ReadAllText |> Ok with | e -> e.Message |> eMsg |> Error
+type FilePath = string
+type Get = FilePath -> Result<YamlConfig,string>
 
-let extractYamlData (r: Legivel.Serialization.DeserializeResult<AllConfig> list) =
-    match r with
-    // expecting only 1 yaml doc
-    | [h:_] when List.length r = 1 ->
-        match h with
-        | Legivel.Serialization.DeserializeResult.Success d -> Ok d.Data
-        | Legivel.Serialization.DeserializeResult.Error e -> Error $"%A{e}"
-    | _ ->
-        "Yaml parsing - Either none or too many yaml documents found"
-        |> Error
+module YamlConfig =
 
-"./src/configuration.navutv.yml"
-|> read
-|> Result.bind (fun ys -> try Legivel.Serialization.Deserialize<AllConfig> ys |> Ok with | e -> Error e.Message)
-|> Result.bind extractYamlData
+    let private read (filePath: string) =
+            let eMsg e = $"Failure reading {filePath} - {e}"
+            try filePath |> System.IO.File.ReadAllText |> Ok with | e -> e.Message |> eMsg |> Error
+
+    let private firstDoc =
+        function
+            | [h] ->
+                match h with
+                    | Legivel.Serialization.DeserializeResult.Success d -> Ok d.Data
+                    | Legivel.Serialization.DeserializeResult.Error e -> Error $"%A{e}"
+            | _ -> Error "Failure in yaml parsing, none or too many yaml documents found"
+
+    let private deserialize s =
+        try Legivel.Serialization.Deserialize<YamlConfig> s |> Ok with | e -> Error e.Message
+
+    let get : Get = fun fp -> fp |> (read >> Result.bind deserialize >> Result.bind firstDoc)
+
+"./src/configuration.navutv.yml" |> YamlConfig.get
