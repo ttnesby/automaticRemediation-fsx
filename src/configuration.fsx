@@ -78,7 +78,7 @@ module All =
             try (
                 "e66a3cea-955c-45e8-b388-e962aa80c514" |>System.Guid.Parse,
                 ScopeFilterType.ManagementGroup,
-                "nav.*",
+                ".*",
                 None,
                 None) |> create |> Ok
             with | e -> e.Message |> eMsg |> Error

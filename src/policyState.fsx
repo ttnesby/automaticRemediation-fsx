@@ -61,13 +61,6 @@ module NonCompliance =
             $"https://management.azure.com/providers/Microsoft.Management/managementGroups/{mngGrpName}" +
             "/providers/Microsoft.PolicyInsights/policyStates/latest/queryResults"
 
-        type InitQP = {|``api-version``: string; ``$filter``:string; ``$select``: string|}
-        type RecQP = {|``api-version``: string|}
-
-        type QParams =
-        | Init of qp: InitQP
-        | Rec of qp: RecQP
-
         let get (t: OAuth.Token, tech: Configuration.Technical) (filter: string) (url: string) =
             let eMsg e = $"Failure during policy state request - [{e}]"
             let rec loop (aUrl: string, values: RState list) =
@@ -96,27 +89,29 @@ module NonCompliance =
 
         let uniqueRefIds (rss: RestAPI.RState list) =
             let mayBeRefId (rs: RestAPI.RState) =
-                if (rs.policyDefinitionReferenceId <> "")
-                then rs.policyDefinitionReferenceId |> Some
-                else None
+                if (rs.policyDefinitionReferenceId <> "") then Some rs.policyDefinitionReferenceId else None
 
             rss |> List.map mayBeRefId |> List.choose id |> List.distinct
 
-        let toState (e: Scope.Entity) (aId: string, rss: RestAPI.RState list ) =
-            let refIds = rss |> uniqueRefIds
-            if (refIds |> List.isEmpty)
+        let rStateToNonCompliance (e: Scope.Entity) (aId: string, rss: RestAPI.RState list ) =
+            let refIds = uniqueRefIds rss
+            if (List.isEmpty refIds)
             then create (e.displayName, e.id, aId, AssignmentType.Policy)
             else create (e.displayName, e.id, aId, AssignmentType.PolicySet refIds)
 
-        let toStates (e: Scope.Entity) (rssg: (string*RestAPI.RState list) list) = rssg |> List.map (e |> toState)
+        let rStatesToNonCompliance (e: Scope.Entity) (rssg: (string*RestAPI.RState list) list) = List.map (rStateToNonCompliance e) rssg
+
+    let scopeNonCompliance t (e: Scope.Entity) = async {
+        return (
+            RestAPI.get t (RestAPI.filter e.id) (RestAPI.url (e.name.ToString()))
+            |> Result.map Mapping.policyStatesByAssignmentId
+            |> Result.map (e |> Mapping.rStatesToNonCompliance)
+        )
+    }
 
     let get : Get = fun t -> fun scopes ->
         scopes
-        |> List.map (fun e ->
-            RestAPI.get t (e.id |> RestAPI.filter) (e.name.ToString() |> RestAPI.url)
-            |> Result.map Mapping.policyStatesByAssignmentId
-            |> Result.map (e |> Mapping.toStates)
-        )
+        |> List.map (scopeNonCompliance t) |> Async.Parallel |> Async.RunSynchronously |> Array.toList
         |> List.map (fun r -> r |> function | Ok s -> Some s | Error _ -> None)
         |> List.choose id
         |> List.collect id
