@@ -26,7 +26,6 @@ with
         $"\n{s.assignmentType}\n"
 
 type Get = OAuth.Token*Configuration.Technical -> Scope.Entity list -> NonCompliance list
-type Report = string -> NonCompliance list -> unit
 
 module NonCompliance =
 
@@ -63,10 +62,10 @@ module NonCompliance =
 
         let get (t: OAuth.Token, tech: Configuration.Technical) (filter: string) (url: string) =
             let eMsg e = $"Failure during policy state request - [{e}]"
+            let qParams = {|``api-version`` = "2019-10-01";``$filter`` = filter;``$select`` = select|}
             let rec loop (aUrl: string, values: RState list) =
                 match values with
-                | [] ->
-                    aUrl.SetQueryParams( {|``api-version`` = "2019-10-01";``$filter`` = filter;``$select`` = select|} )
+                | [] -> aUrl.SetQueryParams( qParams )
                 | _ -> aUrl |> Url
                 |> fun (u: Url) ->
                     u
