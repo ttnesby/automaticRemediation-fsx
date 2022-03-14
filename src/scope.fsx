@@ -57,7 +57,7 @@ module Entity =
             let eMsg e = $"Failure during mng grp request - [{e}]"
             let tryGet =
                 try
-                     "https://management.azure.com/providers/Microsoft.Management/managementGroups"
+                    "https://management.azure.com/providers/Microsoft.Management/managementGroups"
                         .AppendPathSegment(app.startMngGrp.ToString())
                         .SetQueryParams( {|
                             ``api-version`` = "2020-05-01"
@@ -92,11 +92,11 @@ module Entity =
                 match siblings with
                 | [] -> scopes
                 | [h] -> h.children
-                         |> function
+                        |> function
                             | null -> scopes@[h |> toEntity]
                             | ca -> loop(ca |> Array.toList, scopes@[h |> toEntity])
                 | h::t -> h.children
-                          |> function
+                        |> function
                             | null -> loop(t, scopes@[h |> toEntity])
                             | ca -> loop((ca |> Array.toList)@t, scopes@[h |> toEntity])
 
