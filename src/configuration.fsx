@@ -28,10 +28,6 @@ type Technical = {
     httpTimeout: int
 }
 
-//type ConfigType =
-//    | Ctx of ctx: Context
-//    | App of app: AppSetting
-//    | Tech of tech: Technical
 type All = {ctx: Context; app: AppSetting; tech: Technical}
 
 type Init = string array -> Result<All, string>
